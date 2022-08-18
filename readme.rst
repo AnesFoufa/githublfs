@@ -24,4 +24,4 @@ This library uses LFS' Basic Transfer API. See https://github.com/git-lfs/git-lf
 
 Production warning
 ------------------
-This library is still experimental. If you use it in productuin, please pin the exact version in your requirements, including the minor number.
+This library is still experimental. If you use it in production, please pin the exact version in your requirements, including the minor number.
