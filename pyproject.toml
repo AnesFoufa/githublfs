@@ -1,9 +1,23 @@
 [tool.poetry]
 name = "githublfs"
-version = "0.1.0"
+version = "0.1.1"
 description = "Simple library to commit lfs files to Github repos"
 authors = ["Anès Foufa <anes.foufa@upply.com>"]
 readme = "readme.rst"
+classifiers = [
+    "Topic :: Software Development :: Version Control",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+keywords = [
+    "Github",
+    "LFS",
+]
+homepage = "https://github.com/AnesFoufa/githublfs"
 
 [tool.poetry.dependencies]
 python = "^3.7"
