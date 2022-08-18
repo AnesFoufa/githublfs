@@ -1,6 +1,8 @@
 name: CI
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -27,3 +29,28 @@ jobs:
         run: poetry run mypy githublfs.py --install-types --non-interactive
       - name: Run linting
         run: poetry run black githublfs.py --check
+  push-to-pypi:
+    needs:
+      - static-checks
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+            python-version: 3.8.10
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.1.14
+      - name: Install
+        run: poetry install
+      - name: Build
+        run: poetry build
+      - name: check
+        run: poetry run twine check dist/*
+      - name: push to pypi
+        run: poetry run twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}

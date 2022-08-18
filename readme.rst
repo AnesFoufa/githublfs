@@ -8,7 +8,12 @@ See https://git-lfs.github.com/
 Usage
 -----
 >>> from githublfs import commit_lfs_file
->>> commit_lfs_file(repo="AnesFoufa/githublfs", token="gh_token_with_repo_scope", branch="main", path="assets/logo.jpg", content=b"binary file content", message="my commit message")
+>>> commit_lfs_file(repo="AnesFoufa/githublfs",
+                    token="gh_token_with_repo_scope",
+                    branch="main",
+                    path="assets/logo.jpg",
+                    content=b"binary file content",
+                    message="my commit message")
 
 To authenticate, an access token with repo scope is neede. See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
