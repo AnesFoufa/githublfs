@@ -35,7 +35,7 @@ jobs:
         run: poetry run pytest
   push-to-pypi:
     needs:
-      - static-checks
+      - static-checks-and-tests
     if: github.ref_type == 'tag'
     runs-on: ubuntu-18.04
     steps:
