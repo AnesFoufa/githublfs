@@ -175,7 +175,6 @@ class CommitFile:
         branch: str,
         message: str,
     ):
-        print("called with", gh_repo, path, content, branch, message)
         g = Github(gh_repo.token)
         repository: Repository = g.get_repo(full_name_or_id=gh_repo.name)
 
