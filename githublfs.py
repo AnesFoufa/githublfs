@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from hashlib import sha256
-from typing import Optional
+from typing import Optional, Callable, Iterable, List
 
 import requests
 from github import Github, UnknownObjectException
@@ -10,6 +10,30 @@ from github.ContentFile import ContentFile
 __all__ = ["commit_lfs_file"]
 
 
+def commit_lfs_file(
+    repo: str, token: str, path: str, content: bytes, branch: str, message: str
+):
+    """
+    Commits a file to a GitHub repository using LFS
+    :param repo: Complete name of the GitHub repository. Example "AnesFoufa/githublfs"
+    :param token: GitHub Personal access token with "repo" scope
+    :param path: path to the file to commit. Example "assets/logo.jpg"
+    :param content: Binary content of the file to update
+    :param branch: Name of the branch to commit to. Example "main".
+    :param message: Commit message. Example "update logo"
+    :return: None
+    """
+
+    return _upload_and_commit(
+        repository=repo,
+        token=token,
+        branch=branch,
+        content=content,
+        message=message,
+        path=path,
+    )
+
+
 @dataclass(frozen=True)
 class URLHeaders:
     url: str
@@ -17,7 +41,7 @@ class URLHeaders:
 
 
 @dataclass
-class UploadAndVerify:
+class UploadAndVerifyData:
     upload: URLHeaders
     verify: Optional[URLHeaders] = None
 
@@ -38,88 +62,138 @@ class GHRepo:
     token: str
 
 
-def commit_lfs_file(
-    repo: str, token: str, path: str, content: bytes, branch: str, message: str
-):
-    """
-    Commits a file to a Github repository using LFS.
-    :param repo: Complete name of the Github repository. Example "AnesFoufa/githublfs"
-    :param token: Github Personal access token with "repo" scope
-    :param path: path to the file to commit. Example "assets/logo.jpg"
-    :param content: Binary content of the file to update.
-    :param branch: Name of the branch to commit to. Example "main".
-    :param message: Commit message. Example "update logo"
-    :return: None
-    """
+class UploadAndCommitLFS:
+    def __init__(self, upload_lfs, commit_pointer):
+        self.upload_lfs = upload_lfs
+        self.commit_pointer = commit_pointer
 
-    # Build needed data
-    digest = _hash_content(content)
-    file_data = FileData(digest=digest, content=content)
-    gh_repo = GHRepo(name=repo, token=token)
+    def __call__(
+        self,
+        repository: str,
+        token: str,
+        path: str,
+        content: bytes,
+        branch: str,
+        message: str,
+    ):
+        digest = self._hash_content(content)
+        file_data = FileData(digest=digest, content=content)
+        gh_repo = GHRepo(name=repository, token=token)
 
-    # Upload data if not in server and commit pointer
-    upload_and_verification_urls_and_headers = _check_file_in_lfs_server(
-        gh_repo=gh_repo,
-        file_data=file_data,
-    )
-    # If the file is not already in the server
-    if upload_and_verification_urls_and_headers:
-        _upload_and_verify(
+        self.upload_lfs(file_data=file_data, gh_repo=gh_repo)
+        self.commit_pointer(
+            gh_repo=gh_repo,
             file_data=file_data,
-            urls_and_headers=upload_and_verification_urls_and_headers,
+            branch=branch,
+            message=message,
+            path=path,
         )
-    _commit_lfs_pointer(
-        branch=branch, file_data=file_data, message=message, path=path, gh_repo=gh_repo
-    )
+
+    @staticmethod
+    def _hash_content(content: bytes) -> str:
+        hasher = sha256()
+        hasher.update(content)
+        return hasher.hexdigest()
 
 
-def _hash_content(content: bytes) -> str:
-    hasher = sha256()
-    hasher.update(content)
-    return hasher.hexdigest()
+class CheckUploadAndVerify:
+    def __init__(
+        self,
+        check_uploaded: Callable[..., Optional[UploadAndVerifyData]],
+        upload,
+        verify,
+    ):
+        self.check_uploaded = check_uploaded
+        self.upload = upload
+        self.verify = verify
+
+    def __call__(
+        self,
+        file_data: FileData,
+        gh_repo: GHRepo,
+    ):
+        upload_and_verify_data = self.check_uploaded(
+            file_data=file_data, gh_repo=gh_repo
+        )
+        if upload_and_verify_data:
+            self.upload(
+                url_headers=upload_and_verify_data.upload, content=file_data.content
+            )
+            if upload_and_verify_data.verify:
+                self.verify(
+                    url_headers=upload_and_verify_data.verify, file_data=file_data
+                )
 
 
-def _check_file_in_lfs_server(
-    gh_repo: GHRepo, file_data: FileData
-) -> Optional[UploadAndVerify]:
-    """
-    :param gh_repo: Github repo data.
-    :param file_data: File to check data.
-    :return: None if file already uploaded, UploadAndVerify headers ans urls otherwise.
-    """
-    json_response = _post_pre_upload_request_to_lfs_server(
-        file_data=file_data, gh_repo=gh_repo
-    )
-    res = _parse_upload_and_verify_from_response(json_response)
-    return res
+class CheckFileInLFSServer:
+    def __init__(
+        self,
+        request_file_in_server: Callable[..., dict],
+        parse_response: Callable[..., Optional[UploadAndVerifyData]],
+    ):
+        self.file_in_server = request_file_in_server
+        self.parse_response = parse_response
+
+    def __call__(
+        self, gh_repo: GHRepo, file_data: FileData
+    ) -> Optional[UploadAndVerifyData]:
+        response = self.file_in_server(gh_repo=gh_repo, file_data=file_data)
+        return self.parse_response(response=response)
 
 
-def _upload_and_verify(file_data: FileData, urls_and_headers: UploadAndVerify):
-    """
-    Upload file to LFS and optionally verify it is correctly uploaded.
-    :param file_data: File to verify.
-    :param urls_and_headers: Url and headers for upload and verification.
-    :return: None
-    :raise AssertionError if LFS server does not behave as expected.
-    """
-    _upload_file_to_lfs_server(
-        url_headers=urls_and_headers.upload, content=file_data.content
-    )
-    if urls_and_headers.verify:
-        _verify_file_uploaded(url_headers=urls_and_headers.verify, file_data=file_data)
+class CommitLFSPointer:
+    def __init__(self, commit_file: Callable[..., None]):
+        self._commit_file = commit_file
+
+    def __call__(
+        self, gh_repo: GHRepo, file_data: FileData, message: str, path: str, branch: str
+    ):
+        pointer_content = (
+            f"version https://git-lfs.github.com/spec/v1"
+            f"\noid sha256:{file_data.digest}\nsize {file_data.size}\n"
+        )
+        self._commit_file(
+            gh_repo=gh_repo,
+            path=path,
+            content=pointer_content,
+            branch=branch,
+            message=message,
+        )
 
 
-def _commit_lfs_pointer(
-    branch: str, file_data: FileData, message: str, path: str, gh_repo: GHRepo
-):
-    pointer_content = f"version https://git-lfs.github.com/spec/v1\noid sha256:{file_data.digest}\nsize {file_data.size}\n"
-    _commit_file(
-        gh_repo=gh_repo,
-        path=path,
-        content=pointer_content,
-        branch=branch,
-        message=message,
-    )
+class CommitFile:
+    def __init__(
+        self, get_file_content: Callable[..., Optional[Iterable[ContentFile]]]
+    ):
+        self._get_file_content = get_file_content
+
+    def __call__(
+        self,
+        gh_repo: GHRepo,
+        path: str,
+        content: str,
+        branch: str,
+        message: str,
+    ):
+        print("called with", gh_repo, path, content, branch, message)
+        g = Github(gh_repo.token)
+        repository: Repository = g.get_repo(full_name_or_id=gh_repo.name)
+
+        maybe_contents = self._get_file_content(
+            repository=repository, path=path, branch=branch
+        )
+        if maybe_contents is not None:  # if file exists in repository
+            for file_content in maybe_contents:
+                repository.update_file(
+                    path=file_content.path,
+                    message=message,
+                    content=content,
+                    sha=file_content.sha,
+                )
+        else:
+            repository.create_file(
+                path=path, message=message, content=content, branch=branch
+            )
 
 
 def _post_pre_upload_request_to_lfs_server(file_data: FileData, gh_repo: GHRepo):
@@ -146,8 +220,10 @@ def _post_pre_upload_request_to_lfs_server(file_data: FileData, gh_repo: GHRepo)
     return json_response
 
 
-def _parse_upload_and_verify_from_response(json_response) -> Optional[UploadAndVerify]:
-    first_object = json_response["objects"][0]
+def _parse_upload_and_verify_from_response(
+    response,
+) -> Optional[UploadAndVerifyData]:
+    first_object = response["objects"][0]
     res = None
     if "actions" in first_object and "upload" in first_object["actions"]:
         actions_dict = first_object["actions"]
@@ -155,7 +231,7 @@ def _parse_upload_and_verify_from_response(json_response) -> Optional[UploadAndV
         upload_url_and_headers = URLHeaders(
             headers=upload_dict["header"], url=upload_dict["href"]
         )
-        res = UploadAndVerify(upload=upload_url_and_headers)
+        res = UploadAndVerifyData(upload=upload_url_and_headers)
         if "verify" in actions_dict:
             verify_dict = actions_dict["verify"]
             verify_url_and_headers = URLHeaders(
@@ -167,74 +243,61 @@ def _parse_upload_and_verify_from_response(json_response) -> Optional[UploadAndV
 
 def _upload_file_to_lfs_server(url_headers: URLHeaders, content: bytes):
     """
-    Uploads file content to lfs server.
-    :param url_headers: URL and headers returned by LFS server to upload.
+    Uploads file content to lfs server
+    :param url_headers: URL and headers returned by LFS server to upload
     :param content: file content to upload.
     :return: None
     :raise AssertionError if the server doesn't return 200 status code.
     """
-
-    url_headers.headers["Content-Type"] = "application/octet-stream"
-    response = requests.put(
-        headers=url_headers.headers, url=url_headers.url, data=content
-    )
+    headers = url_headers.headers.copy()
+    headers["Content-Type"] = "application/octet-stream"
+    response = requests.put(headers=headers, url=url_headers.url, data=content)
     assert response.status_code == 200, _error_message(response)
 
 
 def _verify_file_uploaded(url_headers: URLHeaders, file_data: FileData):
-    headers = url_headers.headers
+    headers = url_headers.headers.copy()
     headers["Content-Type"] = "application/vnd.git-lfs+json"
     post_data = {"oid": file_data.digest, "size": file_data.size}
     response = requests.post(
         url=url_headers.url,
-        headers=url_headers.headers,
+        headers=headers,
         data=post_data,
     )
     assert response.status_code == 200, _error_message(response)
 
 
-def _commit_file(
-    gh_repo: GHRepo,
-    path: str,
-    content: str,
-    branch: str,
-    message: str,
-):
-    g = Github(gh_repo.token)
-    repository: Repository = g.get_repo(gh_repo.name)
-
-    maybe_content = _get_github_content(repository=repository, path=path, branch=branch)
-    if maybe_content:  # if file exists in repository
-        repository.update_file(
-            path=maybe_content.path,
-            message=message,
-            content=content,
-            sha=maybe_content.sha,
-        )
-    else:
-        repository.create_file(
-            path=path, message=message, content=content, branch=branch
-        )
-
-
 def _get_github_content(
     repository: Repository, path: str, branch: str
-) -> Optional[ContentFile]:
+) -> Optional[List[ContentFile]]:
     try:
         old_contents = repository.get_contents(path=path, ref=branch)
         if isinstance(old_contents, list):
-            if not old_contents:
-                return None
-            old_content = old_contents[0]
+            res = old_contents
         else:
-            old_content = old_contents
+            res = [old_contents]
     except UnknownObjectException:
-        return None
-    else:
-        return old_content
+        res = None
+    return res
 
 
 def _error_message(response: requests.Response) -> str:
     return (
         f"Expected success, got {response.status_code} status code. \n{response.text}"
     )
+
+
+_upload_lfs = CheckUploadAndVerify(
+    check_uploaded=CheckFileInLFSServer(
+        request_file_in_server=_post_pre_upload_request_to_lfs_server,
+        parse_response=_parse_upload_and_verify_from_response,
+    ),
+    upload=_upload_file_to_lfs_server,
+    verify=_verify_file_uploaded,
+)
+_upload_and_commit = UploadAndCommitLFS(
+    upload_lfs=_upload_lfs,
+    commit_pointer=CommitLFSPointer(
+        commit_file=CommitFile(get_file_content=_get_github_content)
+    ),
+)

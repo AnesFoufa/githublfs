@@ -27,10 +27,12 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install dev dependencies
         run: poetry install
-      - name: Run type checking
-        run: poetry run mypy githublfs.py --install-types --non-interactive
       - name: Run linting
         run: poetry run black githublfs.py --check
+      - name: Run type checking
+        run: poetry run mypy githublfs.py --install-types --non-interactive
+      - name: Run tests
+        run: poetry run pytest tests/*
   push-to-pypi:
     needs:
       - static-checks

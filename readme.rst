@@ -5,6 +5,10 @@ using git LFS.
 
 See https://git-lfs.github.com/
 
+Installation
+------------
+``pip install githublfs``
+
 Usage
 -----
 >>> from githublfs import commit_lfs_file
