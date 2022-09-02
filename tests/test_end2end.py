@@ -51,6 +51,7 @@ def test_commit_lfs_file_should_upload_and_verify_file_and_update_pointer_when_f
         sha=github_content.sha,
         content=pointer_content,
         message=message,
+        branch=branch,
     )
 
 
@@ -146,6 +147,7 @@ def test_commit_lfs_file_should_upload_and_not_verify_file_and_create_pointer_wh
         sha=github_content.sha,
         content=pointer_content,
         message=message,
+        branch=branch,
     )
 
 
@@ -192,6 +194,7 @@ def test_commit_lfs_file_should_not_upload_when_no_upload_file_url(
         sha=github_content.sha,
         content=pointer_content,
         message=message,
+        branch=branch,
     )
 
 
@@ -234,12 +237,14 @@ def test_commit_lfs_file_should_update_many_files_when_many_corresponding_files_
         sha=github_contents[1].sha,
         content=pointer_content,
         message=message,
+        branch=branch,
     )
     fake_repository.update_file.assert_any_call(
         path=github_contents[0].path,
         sha=github_contents[0].sha,
         content=pointer_content,
         message=message,
+        branch=branch,
     )
 
 

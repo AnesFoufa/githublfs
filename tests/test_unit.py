@@ -445,7 +445,11 @@ def test_commit_file_should_update_files_if_exist(
     fake_github.assert_called_with(gh_repo.name)
     for gh_content in gh_contents:
         fake_repository.update_file.assert_any_call(
-            sha=gh_content.sha, content=content, message=message, path=gh_content.path
+            sha=gh_content.sha,
+            content=content,
+            message=message,
+            path=gh_content.path,
+            branch=branch,
         )
 
 

@@ -188,6 +188,7 @@ class CommitFile:
                     message=message,
                     content=content,
                     sha=file_content.sha,
+                    branch=branch,
                 )
         else:
             repository.create_file(
