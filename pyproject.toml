@@ -2,6 +2,7 @@
 name = "githublfs"
 version = "0.1.3"
 description = "Simple library to commit lfs files to Github repos"
+license = "MIT"
 authors = ["Anès Foufa <anes.foufa@upply.com>"]
 readme = "readme.rst"
 classifiers = [

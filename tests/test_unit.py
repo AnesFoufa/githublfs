@@ -415,7 +415,7 @@ def test_commit_file_should_create_file_if_not_exists(
         gh_repo=gh_repo, branch=branch, content=content, message=message, path=path
     )
 
-    assert fake_github_class.called_with(gh_repo.token)
+    fake_github_class.assert_called_with(gh_repo.token)
     fake_github.assert_called_with(gh_repo.name)
     fake_repository.create_file.assert_called_once_with(
         branch=branch, content=content, message=message, path=path
@@ -441,7 +441,7 @@ def test_commit_file_should_update_files_if_exist(
         gh_repo=gh_repo, branch=branch, content=content, message=message, path=path
     )
 
-    assert fake_github_class.called_with(gh_repo.token)
+    fake_github_class.assert_called_with(gh_repo.token)
     fake_github.assert_called_with(gh_repo.name)
     for gh_content in gh_contents:
         fake_repository.update_file.assert_any_call(

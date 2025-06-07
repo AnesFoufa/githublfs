@@ -19,7 +19,7 @@ Usage
                     content=b"binary file content",
                     message="my commit message")
 
-To authenticate, an access token with repo scope is neede. See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+To authenticate, an access token with repo scope is needed. See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
 Dependencies
 ------------
@@ -34,3 +34,7 @@ This library uses LFS' Basic Transfer API. See https://github.com/git-lfs/git-lf
 Production warning
 ------------------
 This library is still experimental. If you use it in production, please pin the exact version in your requirements, including the minor number.
+
+License
+-------
+This project is distributed under the MIT license. See the `LICENSE` file for details.
