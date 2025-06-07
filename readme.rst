@@ -23,7 +23,7 @@ To authenticate, an access token with repo scope is needed. See: https://docs.gi
 
 Dependencies
 ------------
-* python = "^3.7"
+* python = "^3.8"
 * PyGithub = "^1.55"
 * requests = "^2.28.1"
 

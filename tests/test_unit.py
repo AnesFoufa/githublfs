@@ -365,7 +365,7 @@ def test_upload_file_to_lfs_server_should_have_correct_request(
     assert m.called_once
     last_request = m.last_request
     request_headers = last_request.headers
-    for (key, value) in upload_url_headers.headers.items():
+    for key, value in upload_url_headers.headers.items():
         assert request_headers[key] == value
     assert request_headers["Content-Type"] == "application/octet-stream"
     assert last_request.body == content
@@ -393,7 +393,7 @@ def test_verify_file_uploaded_should_request_with_correct_headers_and_body(
     assert m.called_once
     last_request = m.last_request
     request_headers = last_request.headers
-    for (key, value) in verify_url_headers.headers.items():
+    for key, value in verify_url_headers.headers.items():
         assert request_headers[key] == value
     assert request_headers["Content-Type"] == "application/vnd.git-lfs+json"
     expected_request_body = f"oid={file_data.digest}&size={file_data.size}"
