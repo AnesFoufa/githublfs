@@ -365,7 +365,7 @@ def test_upload_file_to_lfs_server_should_have_correct_request(
     assert m.called_once
     last_request = m.last_request
     request_headers = last_request.headers
-    for (key, value) in upload_url_headers.headers.items():
+    for key, value in upload_url_headers.headers.items():
         assert request_headers[key] == value
     assert request_headers["Content-Type"] == "application/octet-stream"
     assert last_request.body == content
@@ -393,7 +393,7 @@ def test_verify_file_uploaded_should_request_with_correct_headers_and_body(
     assert m.called_once
     last_request = m.last_request
     request_headers = last_request.headers
-    for (key, value) in verify_url_headers.headers.items():
+    for key, value in verify_url_headers.headers.items():
         assert request_headers[key] == value
     assert request_headers["Content-Type"] == "application/vnd.git-lfs+json"
     expected_request_body = f"oid={file_data.digest}&size={file_data.size}"
@@ -415,7 +415,7 @@ def test_commit_file_should_create_file_if_not_exists(
         gh_repo=gh_repo, branch=branch, content=content, message=message, path=path
     )
 
-    assert fake_github_class.called_with(gh_repo.token)
+    fake_github_class.assert_called_with(gh_repo.token)
     fake_github.assert_called_with(gh_repo.name)
     fake_repository.create_file.assert_called_once_with(
         branch=branch, content=content, message=message, path=path
@@ -441,7 +441,7 @@ def test_commit_file_should_update_files_if_exist(
         gh_repo=gh_repo, branch=branch, content=content, message=message, path=path
     )
 
-    assert fake_github_class.called_with(gh_repo.token)
+    fake_github_class.assert_called_with(gh_repo.token)
     fake_github.assert_called_with(gh_repo.name)
     for gh_content in gh_contents:
         fake_repository.update_file.assert_any_call(
