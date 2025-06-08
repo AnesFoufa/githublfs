@@ -13,7 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        poetry-version: ["1.7.1"]
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -21,18 +20,18 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
-      - name: Install dev dependencies
-        run: poetry install
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: |
+          uv pip install -r pylock.toml --system --no-progress
+          uv pip install -e . --system --no-progress
       - name: Run linting
-        run: poetry run black githublfs --check
+        run: black src/githublfs --check
       - name: Run type checking
-        run: poetry run mypy githublfs --install-types --non-interactive --ignore-missing-imports
+        run: mypy src/githublfs --install-types --non-interactive --ignore-missing-imports
       - name: Run tests
-        run: poetry run pytest
+        run: pytest -q
   push-to-pypi:
     needs:
       - static-checks-and-tests
@@ -42,19 +41,15 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-            python-version: 3.12.0
-      - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: 1.7.1
-      - name: Install
-        run: poetry install
+          python-version: 3.12.0
+      - name: Install uv
+        run: pip install uv
       - name: Build
-        run: poetry build
+        run: uv build
       - name: check
-        run: poetry run twine check dist/*
+        run: uv run twine check dist/*
       - name: push to pypi
-        run: poetry run twine upload dist/*
+        run: uv run twine upload dist/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
