@@ -27,7 +27,7 @@ jobs:
           uv pip install -r pylock.toml --system --no-progress
           uv pip install -e . --system --no-progress
       - name: Run linting
-        run: black src/githublfs --check
+        run: ruff format src/githublfs tests --check
       - name: Run type checking
         run: mypy src/githublfs --install-types --non-interactive --ignore-missing-imports
       - name: Run tests

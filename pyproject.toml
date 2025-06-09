@@ -27,7 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "mypy>=1.10",
-    "black>=22.6.0",
+    "ruff>=0.11.0",
     "twine>=4.0.1",
     "requests-mock>=1.9.3",
     "pytest>=7.1.2",
