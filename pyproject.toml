@@ -1,10 +1,11 @@
-[tool.poetry]
+[project]
 name = "githublfs"
-version = "0.2.0"
+version = "0.2.1"
 description = "Simple library to commit lfs files to Github repos"
-license = "MIT"
-authors = ["Anès Foufa <anes.foufa@upply.com>"]
 readme = "readme.rst"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Anès Foufa", email = "anes.foufa@upply.com"}]
 classifiers = [
     "Topic :: Software Development :: Version Control",
     "Topic :: Software Development :: Version Control :: Git",
@@ -14,26 +15,25 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
-keywords = [
-    "Github",
-    "LFS",
+keywords = ["Github", "LFS"]
+urls = {Homepage = "https://github.com/AnesFoufa/githublfs"}
+packages = [{include = "githublfs"}]
+dependencies = [
+    "PyGithub>=1.55",
+    "requests>=2.28.1",
 ]
-homepage = "https://github.com/AnesFoufa/githublfs"
 
-[tool.poetry.dependencies]
-python = "^3.8"
-PyGithub = "^1.55"
-requests = "^2.28.1"
-
-[tool.poetry.dev-dependencies]
-mypy = "^1.10"
-black = "^22.6.0"
-twine = "^4.0.1"
-requests-mock = "^1.9.3"
-pytest = "^7.1.2"
-
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.10",
+    "ruff>=0.11.0",
+    "twine>=4.0.1",
+    "requests-mock>=1.9.3",
+    "pytest>=7.1.2",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv-build>=0.7"]
+build-backend = "uv_build"

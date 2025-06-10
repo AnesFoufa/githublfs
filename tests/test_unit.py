@@ -39,9 +39,9 @@ class Spy:
         assert kwargs == self.called_with
 
     def assert_never_called(self):
-        assert (
-            self.never_called
-        ), f"Spy object not expected to be called but was called with {self.called_with}"
+        assert self.never_called, (
+            f"Spy object not expected to be called but was called with {self.called_with}"
+        )
 
     def assert_called(self):
         assert not self.never_called, f"Spy object expected to be called but was not"
