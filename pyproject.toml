@@ -1,6 +1,6 @@
 [project]
 name = "githublfs"
-version = "0.2.0"
+version = "0.2.1"
 description = "Simple library to commit lfs files to Github repos"
 readme = "readme.rst"
 requires-python = ">=3.8"
@@ -15,6 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 keywords = ["Github", "LFS"]
 urls = {Homepage = "https://github.com/AnesFoufa/githublfs"}
